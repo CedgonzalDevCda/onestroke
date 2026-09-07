@@ -9,6 +9,11 @@ export default function StarsProgress({
   stars: number
   maxStars: number
 }) {
+  // Si aucune étoile obtenue, on n'affiche rien du tout
+  if (stars === 0) {
+    return null
+  }
+
   return (
     <View style={styles.row}>
       {Array.from({ length: maxStars }).map((_, i) => {

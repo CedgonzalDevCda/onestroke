@@ -1,4 +1,4 @@
-import { Pressable, Text, StyleSheet } from "react-native"
+import { Pressable, Text, StyleSheet, View } from "react-native"
 import { useState } from "react"
 import { router } from "expo-router"
 import { LinearGradient } from "expo-linear-gradient"
@@ -15,9 +15,15 @@ export default function LevelItem({ worldId, level }: any) {
   // --- STATE LOGIC ---
   const isUnlocked = progression.isLevelUnlocked(worldId, level.id)
   const stars = progression.getStars(level.id)
+  const isCompleted = progression.isLevelCompleted(level.id) // Basé sur l'existence dans completedLevels
 
-  const isCompleted = stars > 0
-  const isFullCompleted = stars === 3
+  // maxStars réel du niveau (peut être 0 pour certains niveaux)
+  const maxStars = level.maxStars ?? 3
+
+  // Un niveau est "pleinement complété" (fond doré) si :
+  // - il est terminé
+  // - ET (soit il n'a aucune étoile à obtenir, soit toutes les étoiles sont obtenues)
+  const isFullCompleted = isCompleted && (maxStars === 0 || stars >= maxStars)
 
   // --- ACTIONS ---
   const openLevel = () => {
@@ -58,33 +64,34 @@ export default function LevelItem({ worldId, level }: any) {
         <Text style={styles.levelText}>
           {level.name.replace("Level ", "")}
         </Text>
-        <StarsProgress stars={stars} maxStars={3} />
+        {stars > 0 && maxStars > 0 && (
+          <StarsProgress stars={stars} maxStars={maxStars} />
+        )}
       </>
     )
   }
 
-  const containerStyle = [
-    styles.level,
-    !isUnlocked
-      ? styles.locked
-      : isCompleted
-      ? styles.completed
-      : styles.available,
-  ]
+  const fillStyle = !isUnlocked
+    ? styles.locked
+    : isCompleted
+    ? styles.completed
+    : styles.available
 
   // --- RENDER ---
   return (
     <>
-      <Pressable style={containerStyle} onPress={handlePress}>
+      <Pressable style={styles.level} onPress={handlePress}>
         {isFullCompleted ? (
           <LinearGradient
             colors={["#FFFFAA", "#FFA666"]}
-            style={styles.inner}
+            style={styles.gradientFill}
           >
             {renderContent()}
           </LinearGradient>
         ) : (
-          renderContent()
+          <View style={[styles.inner, fillStyle]}>
+            {renderContent()}
+          </View>
         )}
       </Pressable>
 
@@ -98,7 +105,6 @@ export default function LevelItem({ worldId, level }: any) {
   )
 }
 
-
 const styles = StyleSheet.create({
   level: {
     width: 70,
@@ -108,8 +114,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
+  gradientFill: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   inner: {
     flex: 1,
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -122,61 +137,13 @@ const styles = StyleSheet.create({
 
   available: {
     backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   completed: {
     backgroundColor: "#BBDEC5",
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   locked: {
     backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  modal: {
-    width: 250,
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-  },
-
-  modalText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  yesBtn: {
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    borderRadius: 8,
-  },
-
-  noBtn: {
-    backgroundColor: "#F44336",
-    padding: 10,
-    borderRadius: 8,
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
   },
 })
