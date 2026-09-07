@@ -11,7 +11,6 @@ function createDefaultState(): PlayerState {
 }
 
 export class ProgressionService {
-  // ✅ jamais null : état par défaut dès la construction
   private state: PlayerState = createDefaultState()
   private ready = false
 
@@ -83,9 +82,11 @@ export class ProgressionService {
   }
 
   // ✅ LEVEL COMPLETED
+  // CORRECTION : on vérifie explicitement la présence de la clé dans l'objet,
+  // ce qui fonctionne correctement même si la valeur associée est 0.
   isLevelCompleted(levelId: string): boolean {
     this.ensureState()
-    return this.state.completedLevels[levelId] !== undefined
+    return Object.prototype.hasOwnProperty.call(this.state.completedLevels, levelId)
   }
 
   // ✅ STARS
@@ -118,10 +119,12 @@ export class ProgressionService {
   }
 
   // ✅ COMPLETE LEVEL
+  // CORRECTION : on assigne toujours la clé (même à 0) pour marquer le niveau
+  // comme "vu/complété", peu importe si le nouveau score d'étoiles est inférieur.
   async completeLevel(levelId: string, stars: number) {
     this.ensureState()
 
-    const currentStars = this.state.completedLevels[levelId] ?? 0
+    const currentStars = this.state.completedLevels[levelId] ?? -1
 
     if (stars > currentStars) {
       this.state.completedLevels[levelId] = stars
